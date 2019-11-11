@@ -12,10 +12,14 @@ class CPU:
         self.reg.append(0xF4)
         self.ram=[0]*255
         self.IR=0
+        self.sp = 0xF3
 
         self.inst={
             0b10000010:self.LDI,
-            0b01000111:self.PRN
+            0b01000111:self.PRN,
+            0b10100010:self.MUL,
+            0b01000110:self.pop,
+            0b01000101:self.push
         }
 
         # self.enc={
@@ -79,9 +83,13 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
+        aluReg =[0]*2
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+        if op == "MUL":
+            self.reg[reg_a]*=self.reg[reg_b]
+
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -133,5 +141,25 @@ class CPU:
 
     def PRN(self):
         self.pc+=1
-        reg = self.ram[-self.pc]
+        reg = self.ram[self.pc]
         print(self.reg[reg])
+
+    def MUL(self):
+        self.pc+=1
+        reg1=self.ram_read(self.pc)
+        self.pc+=1
+        reg2=self.ram_read(self.pc)
+        self.alu('MUL',reg1,reg2)
+
+    def push(self):
+        self.sp-=1
+        self.pc+=1
+        reg = self.ram_read(self.pc)
+        self.ram_write(self.sp, self.reg[reg])
+
+    def pop(self):
+        self.pc+=1
+        reg = self.ram_read(self.pc)
+        data = self.ram_read(self.sp)
+        self.reg[reg]=data
+        self.sp+=1
