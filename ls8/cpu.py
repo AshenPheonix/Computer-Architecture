@@ -12,7 +12,7 @@ class CPU:
         self.reg.append(0xF4)
         self.ram=[0]*255
         self.IR=0
-        self.sp = 0xF3
+        self.sp = 7
 
         self.inst={
             0b10000010:self.LDI,
@@ -152,14 +152,19 @@ class CPU:
         self.alu('MUL',reg1,reg2)
 
     def push(self):
-        self.sp-=1
+        self.reg[self.sp]-=1
         self.pc+=1
         reg = self.ram_read(self.pc)
-        self.ram_write(self.sp, self.reg[reg])
+        self.ram_write(self.reg[self.sp], self.reg[reg])
 
     def pop(self):
         self.pc+=1
         reg = self.ram_read(self.pc)
-        data = self.ram_read(self.sp)
+        data = self.ram_read(self.reg[self.sp])
         self.reg[reg]=data
-        self.sp+=1
+        self.reg[self.sp]+=1
+
+    def call(self):
+        self.pc+=1
+        saved = self.ram_read(self.pc)
+    
