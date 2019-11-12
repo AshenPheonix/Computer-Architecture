@@ -13,13 +13,18 @@ class CPU:
         self.ram=[0]*255
         self.IR=0
         self.sp = 7
+        self.MAR=0
+        self.MDR=0
 
         self.inst={
             0b10000010:self.LDI,
             0b01000111:self.PRN,
             0b10100010:self.MUL,
             0b01000110:self.pop,
-            0b01000101:self.push
+            0b01000101:self.push,
+            0b00010001:self.ret,
+            0b01010000:self.call,
+            0b10100000:self.ADD
         }
 
         # self.enc={
@@ -87,7 +92,7 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        if op == "MUL":
+        elif op == "MUL":
             self.reg[reg_a]*=self.reg[reg_b]
 
         #elif op == "SUB": etc
@@ -156,6 +161,14 @@ class CPU:
         self.pc+=1
         reg = self.ram_read(self.pc)
         self.ram_write(self.reg[self.sp], self.reg[reg])
+    
+    def push_data(self,data):
+        self.reg[self.sp]-=1
+        self.ram_write(self.reg[self.sp],data)
+
+    def pop_data(self):
+        self.MDR=self.ram_read(self.reg[self.sp])
+        self.reg[self.sp]+=1
 
     def pop(self):
         self.pc+=1
@@ -166,5 +179,18 @@ class CPU:
 
     def call(self):
         self.pc+=1
-        saved = self.ram_read(self.pc)
+        self.push_data(self.pc)
+        register=self.ram_read(self.pc)
+        data = self.reg[register]
+        self.pc=data-1
     
+    def ret(self):
+        self.pop_data()
+        self.pc=self.MDR
+
+    def ADD(self):
+        self.pc+=1
+        reg1=self.ram_read(self.pc)
+        self.pc+=1
+        reg2=self.ram_read(self.pc)
+        self.alu("ADD",reg1,reg2)
