@@ -93,17 +93,32 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-        aluReg =[0]*2
-
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+            self.reg[reg_a]%=0b100000000
         elif op == "MUL":
             self.reg[reg_a]*=self.reg[reg_b]
+            self.reg[reg_a]%=0b100000000
         elif op =="CMP":
             if self.reg[reg_a]==self.reg[reg_b]:
                 self.FL|=1
             else:
                 self.FL&=0b11111110
+        elif op=="AND":
+            self.reg[reg_a]&=self.reg[reg_b]
+        elif op=="OR":
+            self.reg[reg_a]|=self.reg[reg_b]
+        elif op =="XOR":
+            self.reg[reg_a]^=self.reg[reg_b]
+        elif op=="NOT":
+            self.reg[reg_a]^=0b11111111
+        elif op=="SHL":
+            self.reg[reg_a]<<1
+            self.reg[reg_a]%=0b100000000
+        elif op=="SHR":
+            self.reg[reg_a]>>1
+        elif op=="MOD":
+            self.reg[reg_a]%=self.reg[reg_b]
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -237,3 +252,10 @@ class CPU:
             self.JMP()
         else:
             self.pc+=1
+
+    def ADDI(self):
+        self.pc+=1
+        dest = self.ram_read(self.pc)
+        self.pc+=1
+        to_add = self.ram_read(self.pc)
+        self.reg[dest]+=to_add
