@@ -15,6 +15,7 @@ class CPU:
         self.sp = 7
         self.MAR=0
         self.MDR=0
+        self.FL=0
 
         self.inst={
             0b10000010:self.LDI,
@@ -24,7 +25,11 @@ class CPU:
             0b01000101:self.push,
             0b00010001:self.ret,
             0b01010000:self.call,
-            0b10100000:self.ADD
+            0b10100000:self.ADD,
+            0b10100111:self.CMP,
+            0b01010100:self.JMP,
+            0b01010101:self.JEQ,
+            0b01010110:self.JNE
         }
 
         # self.enc={
@@ -94,7 +99,11 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "MUL":
             self.reg[reg_a]*=self.reg[reg_b]
-
+        elif op =="CMP":
+            if self.reg[reg_a]==self.reg[reg_b]:
+                self.FL|=1
+            else:
+                self.FL&=0b11111110
         #elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
@@ -194,3 +203,37 @@ class CPU:
         self.pc+=1
         reg2=self.ram_read(self.pc)
         self.alu("ADD",reg1,reg2)
+
+    def ST(self):
+        self.pc+=1
+        dest=self.ram_read(self.pc)
+        self.pc+=1
+        src=self.ram_read(self.pc)
+        self.ram_write(self.reg[dest],self.reg[src])
+
+    def CMP(self):
+        self.pc+=1
+        reg1=self.ram_read(self.pc)
+        self.pc+=1
+        reg2=self.ram_read(self.pc)
+        self.alu("CMP",reg1,reg2)
+
+    def JMP(self):
+        self.pc+=1
+        reg_with_dest = self.ram_read(self.pc)
+        self.pc = self.reg[reg_with_dest]
+        self.pc-=1
+    
+    def JNE(self):
+        test_against = self.FL & 0b00000001
+        if test_against==0:
+            self.JMP()
+        else:
+            self.pc+=1
+
+    def JEQ(self):
+        test_against = self.FL & 0b00000001
+        if test_against==1:
+            self.JMP()
+        else:
+            self.pc+=1
